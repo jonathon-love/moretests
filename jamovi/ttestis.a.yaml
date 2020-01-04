@@ -1,0 +1,11 @@
+---
+name:  ttestIS
+title: ttestIS
+menuGroup: moretests
+version: '1.0.0'
+jas: '1.2'
+addonFor: 'jmv::ttestIS'
+export: false
+
+options: []
+...

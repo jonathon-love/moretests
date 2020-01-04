@@ -1,0 +1,11 @@
+---
+name:  ancova
+title: ancova
+menuGroup: moretests
+version: '1.0.0'
+jas: '1.2'
+addonFor: 'jmv::ancova'
+export: false
+
+options: []
+...

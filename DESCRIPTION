@@ -1,0 +1,12 @@
+Package: moretests
+Type: Package
+Title: Adds more tests to the jamovi analyses
+Version: 0.9.0
+Author: Jonathon Love
+Maintainer: Jonathon Love <jon@thon.cc>
+Description: Adds additional normality tests (Kolmogorov-Smirnov and
+  Anderson-Darling) to the jamovi t-tests, ANOVA, ANCOVA and Linear Regression
+License: AGPL3+
+Encoding: UTF-8
+LazyData: true
+Imports: nortest, jmvcore (>= 1.0.7), R6

@@ -1,0 +1,2 @@
+
+anovaClass <- ancovaClass
