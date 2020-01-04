@@ -1,0 +1,5 @@
+
+build/js
+build/R
+build-*/
+*.jmo
