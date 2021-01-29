@@ -267,8 +267,10 @@ ttestISClass <- R6::R6Class(
 
                     tableEqv$setRow(rowKey=depName, values)
 
-                    if (jmvcore::isError(levene) || is.na(levene[1,"F value"]) || jmvcore::isError(res) || is.na(res$statistic))
-                        tableEqv$addFootnote(rowKey=depName, "f", "F-statistic could not be calculated")
+                    if (jmvcore::isError(levene) || is.na(levene[1,"F value"]))
+                        tableEqv$addFootnote(rowKey=depName, "f[lv]", "F-statistic could not be calculated")
+                    if (jmvcore::isError(res) || is.na(res$statistic))
+                        tableEqv$addFootnote(rowKey=depName, "f[vr]", "F-statistic could not be calculated")
                 }
             }
         }
