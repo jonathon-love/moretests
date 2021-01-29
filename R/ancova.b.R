@@ -51,7 +51,7 @@ ancovaClass <- R6::R6Class(
 
             # redo Levene's and add Bartlett
 
-            if ( self$parent$options$homo) {
+            if (self$parent$options$homo) {
 
                 thomo <- jmvcore::Table$new(
                     options=self$options,
@@ -157,6 +157,7 @@ ancovaClass <- R6::R6Class(
 
                 dep <- self$parent$options$dep
                 factors <- self$parent$options$factors
+                data <- jmvcore::naOmit(data[,c(dep, factors)])
 
                 # Levene's
                 modelTerms <- private$.modelTerms()
@@ -181,7 +182,8 @@ ancovaClass <- R6::R6Class(
                     values[['df[lv]']] <- ""
                     values[['df2[lv]']] <- ""
                     values[['p[lv]']] <- ""
-                } else {
+                } 
+                else {
                     values[['f[lv]']] <- summary[1,"F value"]
                     values[['df[lv]']] <- summary[1,"Df"]
                     values[['df2[lv]']] <- summary[2,"Df"]
@@ -192,7 +194,7 @@ ancovaClass <- R6::R6Class(
                 formula <- as.formula(paste0(dep, '~', rhs))
                 res <- try(private$.bartlett(formula, data))
 
-                if ( ! jmvcore::isError(res) && ! is.na(res$statistic)) {
+                if (! jmvcore::isError(res) && ! is.na(res$statistic)) {
                     values[['f[bt]']] <- res$statistic
                     values[['df[bt]']] <- res$parameter
                     values[['df2[bt]']] <- ""
@@ -206,6 +208,11 @@ ancovaClass <- R6::R6Class(
                 }
 
                 thomo$setRow(rowNo=1, values)
+                
+                if (is.na(summary[1,"F value"]))
+                    thomo$addFootnote(rowKey=1, "f[lv]", "F-statistic could not be calculated")
+                if (jmvcore::isError(res) || is.na(res$statistic))
+                    thomo$addFootnote(rowKey=1, "f[bt]", "F-statistic could not be calculated")
 
             }
         },
