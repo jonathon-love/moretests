@@ -1,7 +1,7 @@
 
-ttestISClass <- R6::R6Class(
-    "ttestISClass",
-    inherit = ttestISBase,
+anovaOneWClass <- if (requireNamespace('jmvcore')) R6::R6Class(
+    "anovaOneWClass",
+    inherit = anovaOneWBase,
     public = list(
         initialize=function(...) {
             super$initialize(...)
@@ -11,15 +11,15 @@ ttestISClass <- R6::R6Class(
     private = list(
         .init = function() {
 
-            if (self$parent$options$norm) {
-
-                table <- jmvcore::Table$new(
+            if (self$parent$options$norm){
+ 
+                 table <- jmvcore::Table$new(
                     options=self$options,
                     name='norm2',
-                    title='Tests of Normality',
+                    title='Normality Tests',
                     columns=list(
                         list(
-                            name='var',
+                            name='dep',
                             title='',
                             type='text'),
                         list(
@@ -61,16 +61,14 @@ ttestISClass <- R6::R6Class(
                     )
                 )
 
-                self$parent$results$assum$norm$setVisible(FALSE)
-                self$parent$results$assum$insert(1, table)
+                self$parent$results$assump$norm$setVisible(FALSE)
+                self$parent$results$assump$insert(1, table)
 
-                for (var in self$parent$options$vars)
-                    table$addRow(rowKey=var, values=list(var=var))
+                for (dep in self$parent$options$deps)
+                    table$addRow(rowKey=dep, values=list(dep=dep))
 
                 table$setNote('moretests', 'Additional results provided by <em>moretests</em>')
-            } 
-
-            # redo Levene's and add ratio of variances
+           }
 
             if (self$parent$options$eqv) {
 
@@ -80,7 +78,7 @@ ttestISClass <- R6::R6Class(
                     title='Homogeneity of Variances Tests',
                     columns=list(
                         list(
-                            name='var',
+                            name='dep',
                             title='',
                             type='text'),
                         list(
@@ -90,7 +88,7 @@ ttestISClass <- R6::R6Class(
                             content="Levene's"),
                         list(
                             name='f[lv]',
-                            title='F'),
+                            title='Statistic'),
                         list(
                             name='df[lv]',
                             title='df',
@@ -107,18 +105,17 @@ ttestISClass <- R6::R6Class(
                             name='t[vr]',
                             title='',
                             type='text',
-                            content="Variance ratio"),
+                            content="Bartlett's"),
                         list(
                             name='f[vr]',
-                            title='F'),
+                            title='Statistic'),
                         list(
                             name='df[vr]',
                             title='df',
                             type='integer'),
                         list(
                             name='df2[vr]',
-                            title='df2',
-                            type='integer'),
+                            title='df2'),
                         list(
                             name='p[vr]',
                             title='p',
@@ -126,114 +123,117 @@ ttestISClass <- R6::R6Class(
                     )
                 )
 
-                self$parent$results$assum$eqv$setVisible(FALSE)
-                self$parent$results$assum$insert(1, tableEqv)
+                self$parent$results$assump$eqv$setVisible(FALSE)
+                self$parent$results$assump$insert(1, tableEqv)
 
-                for (var in self$parent$options$vars)
-                    tableEqv$addRow(rowKey=var, values=list(var=var))
+                for (dep in self$parent$options$deps)
+                    tableEqv$addRow(rowKey=dep, values=list(dep=dep))
 
                 tableEqv$setNote('moretests', 'Additional results provided by <em>moretests</em>')
             }
         },
         .run = function() {
 
+            groupVarName <- self$parent$options$group
+            depVarNames <- self$parent$options$deps
+            data <- self$data
+
+            if (is.null(groupVarName) || length(depVarNames) == 0)
+                return()
+
+            # Normality
+
             if (self$parent$options$norm) {
 
-                groupVarName <- self$parent$options$group
-                depVarNames <- self$parent$options$vars
-
-                if (is.null(groupVarName) || length(depVarNames) == 0)
-                    return()
-
-                data <- self$data
-                table <- self$parent$results$assum$get('norm2')
+                table <- self$parent$results$assump$get('norm2')
 
                 for (depName in depVarNames) {
 
-                    dataTTest <- data.frame(
+                    dataOWTest <- data.frame(
                         dep=jmvcore::toNumeric(data[[depName]]),
                         group=data[[groupVarName]])
 
                     if (self$parent$options$miss == "perAnalysis")
-                        dataTTest <- jmvcore::naOmit(dataTTest)
+                        dataOWTest <- jmvcore::naOmit(dataOWTest)
 
-                    values <- list()
-                    footnote <- NULL
-                    # values[["name"]] <- depName
+                    residuals <- rstandard(lm(dep ~ group, data=dataOWTest))
+                    if (! is.null(residuals)) {
 
-                    residuals <- tapply(dataTTest$dep, dataTTest$group, function(x) x - mean(x))
-                    residuals <- unlist(residuals, use.names=FALSE)
-                    residuals <- scale(residuals)
+                        residuals <- scale(residuals)
+                        values <- list()
+                        footnote <- NULL
 
-                    if (length(dataTTest$dep) < 3) {
-                        next()
-                    }
-
-                    if (length(dataTTest$dep) > 5000) {
-                        values[['s[sw]']] <- NaN
-                        values[['p[sw]']] <- ''
-                    } else {
-                        res <- try(shapiro.test(residuals), silent=TRUE)
-
-                        if ( ! jmvcore::isError(res)) {
-                            values[['s[sw]']] <- res$statistic
-                            values[['p[sw]']] <- res$p.value
-                        }
-                        else {
+                        if (length(dataOWTest$dep) < 3) {
                             values[['s[sw]']] <- NaN
                             values[['p[sw]']] <- ''
+                            footnote <- 'Too few samples to compute statistic (N < 3)'
                         }
-                    }
 
-                    res <- try(ks.test(residuals, 'pnorm', 0, 1), silent=FALSE)
+                        if (length(dataOWTest$dep) > 5000) {
+                            values[['s[sw]']] <- NaN
+                            values[['p[sw]']] <- ''
+                            footnote <- 'Too many samples to compute statistic (N > 5000)'
+                        } else {
+                            res <- try(shapiro.test(residuals), silent=TRUE)
 
-                    if ( ! jmvcore::isError(res)) {
-                        values[['s[ks]']] <- res$statistic
-                        values[['p[ks]']] <- res$p.value
-                    }
-                    else {
-                        values[['s[ks]']] <- NaN
-                        values[['p[ks]']] <- ''
-                    }
+                            if ( ! jmvcore::isError(res)) {
+                                values[['s[sw]']] <- res$statistic
+                                values[['p[sw]']] <- res$p.value
+                            }
+                            else {
+                                values[['s[sw]']] <- NaN
+                                values[['p[sw]']] <- ''
+                            }
+                        }
 
-                    res <- try(nortest::ad.test(residuals), silent=FALSE)
+                        res <- try(ks.test(residuals, 'pnorm', 0, 1), silent=TRUE)
 
-                    if ( ! jmvcore::isError(res)) {
-                        values[['s[ad]']] <- res$statistic
-                        values[['p[ad]']] <- res$p.value
-                    }
-                    else {
-                        values[['s[ad]']] <- NaN
-                        values[['p[ad]']] <- ''
-                    }
+                        if ( ! jmvcore::isError(res)) {
+                            values[['s[ks]']] <- res$statistic
+                            values[['p[ks]']] <- res$p.value
+                        }
+                        else {
+                            values[['s[ks]']] <- NaN
+                            values[['p[ks]']] <- ''
+                        }
 
-                    table$setRow(rowKey=depName, values)
+                        res <- try(nortest::ad.test(residuals), silent=TRUE)
+
+                        if ( ! jmvcore::isError(res)) {
+                            values[['s[ad]']] <- res$statistic
+                            values[['p[ad]']] <- res$p.value
+                        }
+                        else {
+                            values[['s[ad]']] <- NaN
+                            values[['p[ad]']] <- ''
+                        }
+
+                        table$setRow(rowKey=depName, values)
+
+                        if ( ! is.null(footnote))
+                            table$addFootnote(rowKey=dep, 's', footnote)
+                    }
                 }
             }
 
+            # Homogeneity
+
             if (self$parent$options$eqv) {
 
-                groupVarName <- self$parent$options$group
-                depVarNames <- self$parent$options$vars
-
-                if (is.null(groupVarName) || length(depVarNames) == 0)
-                    return()
-
-                data <- self$data
-                tableEqv <- self$parent$results$assum$get('eqv2')
+                tableEqv <- self$parent$results$assump$get('eqv2')
 
                 for (depName in depVarNames) {
 
-                    dataTTest <- data.frame(
+                    dataOWTest <- data.frame(
                         dep=jmvcore::toNumeric(data[[depName]]),
                         group=data[[groupVarName]])
 
                     if (self$parent$options$miss == "perAnalysis")
-                        dataTTest <- jmvcore::naOmit(dataTTest)
+                        dataOWTest <- jmvcore::naOmit(dataOWTest)
 
-                    values <- list()
+                    values <- list()    
 
-                    levene <- try(car::leveneTest(dep ~ group, data=dataTTest, "mean"), silent=TRUE)
+                    levene <- try(car::leveneTest(dep ~ group, data=dataOWTest, "mean"), silent=TRUE)
 
                     if (jmvcore::isError(levene) || is.na(levene[1,"F value"])) {
                         values[['f[lv]']] <- NaN
@@ -247,15 +247,12 @@ ttestISClass <- R6::R6Class(
                         values[['p[lv]']] <- levene[1,"Pr(>F)"]
                     }
 
-                    dep <- dataTTest$dep
-                    group <- as.numeric(factor(dataTTest$group))
-
-                    res <- try(var.test(dep[group==1], dep[group==2]))
+                    res <- try(bartlett.test(dep ~ group, data = dataOWTest), silent=TRUE)
 
                     if ( ! jmvcore::isError(res) && ! is.na(res$statistic)) {
                         values[['f[vr]']] <- res$statistic
-                        values[['df[vr]']] <- res$parameter[1]
-                        values[['df2[vr]']] <- res$parameter[2]
+                        values[['df[vr]']] <- res$parameter
+                        values[['df2[vr]']] <- ""
                         values[['p[vr]']] <- res$p.value
                     }
                     else {
