@@ -39,5 +39,13 @@ analyses:
     menuGroup: moretests
     menuTitle: ancova
     addonFor: 'jmv::ancova'
+  - title: anovaOneW
+    name: anovaOneW
+    ns: moretests
+    menuGroup: moretests
+    menuTitle: anovaOneW
+    addonFor: 'jmv::anovaOneW'
+usesNative: true
+minApp: 1.0.8
 
 ...

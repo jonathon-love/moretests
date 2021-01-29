@@ -1,0 +1,11 @@
+---
+name:  anovaOneW
+title: anovaOneW
+menuGroup: moretests
+version: '1.0.0'
+jas: '1.2'
+addonFor: 'jmv::anovaOneW'
+export: false
+
+options: []
+...
