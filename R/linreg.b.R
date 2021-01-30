@@ -6,6 +6,7 @@ linRegClass <- if (requireNamespace('jmvcore')) R6::R6Class(
         initialize=function(...) {
             super$initialize(...)
             require('nortest')
+            require('lmtest')
         }
     ),
     private = list(
@@ -17,6 +18,62 @@ linRegClass <- if (requireNamespace('jmvcore')) R6::R6Class(
             termsAll <- private$.getModelTerms()
             for (i in seq_along(termsAll)) {
 
+                thomo <- jmvcore::Table$new(
+                    options=self$options,
+                    name='homo',
+                    title='Heteroskedasticity Tests',
+                    rows=1,
+                    clearWith=list(
+                        "dep",
+                        "blocks"),
+                    columns=list(
+                        list(
+                            name='t[bp]',
+                            title='',
+                            type='text',
+                            content='Breusch-Pagan'),
+                        list(
+                            name='s[bp]',
+                            title='Statistic'),
+                        list(
+                            name='p[bp]',
+                            title='p',
+                            format='zto,pvalue'),
+                        list(
+                            name='t[gq]',
+                            title='',
+                            type='text',
+                            content='Goldfeld-Quandt'),
+                        list(
+                            name='s[gq]',
+                            title='Statistic'),
+                        list(
+                            name='p[gq]',
+                            title='p',
+                            format='zto,pvalue'),
+                        list(
+                            name='t[hm]',
+                            title='',
+                            type='text',
+                            content='Harrison-McCabe'),
+                        list(
+                            name='s[hm]',
+                            title='Statistic'),
+                        list(
+                            name='p[hm]',
+                            title='p',
+                            format='zto,pvalue')
+                    )
+                )
+
+                self$parent$results$models$get(key=i)$assump$insert(1, thomo)
+                thomo$addRow(1, values=list(
+                    `t[sw]`="Breusch-Pagan",
+                    `t[ks]`="Goldfeld-Quandt",
+                    `t[ad]`="Harrison-McCabe"))
+
+                thomo$setNote('moretests', 'Additional results provided by <em>moretests</em>')
+ 
                 table <- jmvcore::Table$new(
                     options=self$options,
                     name='norm2',
@@ -66,14 +123,14 @@ linRegClass <- if (requireNamespace('jmvcore')) R6::R6Class(
                 )
 
                 self$parent$results$models$get(key=i)$assump$norm$setVisible(FALSE)
-                self$parent$results$models$get(key=i)$assump$insert(1, table)
+                self$parent$results$models$get(key=i)$assump$insert(1, table)              
                 table$addRow(1, values=list(
                     `t[sw]`="Shapiro-Wilk",
                     `t[ks]`="Kolmogorov-Smirnov",
                     `t[ad]`="Anderson-Darling"))
 
                 table$setNote('moretests', 'Additional results provided by <em>moretests</em>')
-           }
+          }
         },
         .run = function() {
 
@@ -90,6 +147,7 @@ linRegClass <- if (requireNamespace('jmvcore')) R6::R6Class(
                 table <- groups$get(key=i)$assump$get('norm2')
 
                 res <- try(shapiro.test(residuals), silent=TRUE)
+
                 if (jmvcore::isError(res)) {
                     values <- list(`s[sw]`=NaN, `p[sw]`='')
                 } else {
@@ -119,6 +177,42 @@ linRegClass <- if (requireNamespace('jmvcore')) R6::R6Class(
                 }
 
                 table$setRow(rowNo=1, values)
+
+
+                # Heteroskedasticity Tests
+                thomo <- groups$get(key=i)$assump$get('homo')
+                model <- self$parent$models[[i]]
+
+                # Breusch-Pagan   
+                res <- try(lmtest::bptest(model), silent=TRUE) 
+                if (jmvcore::isError(res)) {
+                    values <- list(`s[bp]`=NaN, `p[bp]`='')
+                } else {
+                    values <- list(`s[bp]`=res$statistic, `p[bp]`=res$p.value)
+                }
+                # Goldfeld-Quandt  
+                res <- try(lmtest::gqtest(model), silent=TRUE)
+                if ( ! jmvcore::isError(res)) {
+                    values[['s[gq]']] <- res$statistic
+                    values[['p[gq]']] <- res$p.value
+                }
+                else {
+                    values[['s[gq]']] <- NaN
+                    values[['p[gq]']] <- ''
+                }
+
+                # Harrison-McCabe   
+                res <- try(lmtest::hmctest(model), silent=TRUE)
+                if ( ! jmvcore::isError(res)) {
+                    values[['s[hm]']] <- res$statistic
+                    values[['p[hm]']] <- res$p.value
+                }
+                else {
+                    values[['s[hm]']] <- NaN
+                    values[['p[hm]']] <- ''
+                }
+
+                thomo$setRow(rowNo=1, values)
             }
         },
         .modelTerms = NULL,

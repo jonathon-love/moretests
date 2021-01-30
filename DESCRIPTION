@@ -1,7 +1,7 @@
 Package: moretests
 Type: Package
 Title: Adds more tests to the jamovi analyses
-Version: 0.9.2
+Version: 0.9.3
 Author: Jonathon Love
 Maintainer: Jonathon Love <jon@thon.cc>
 Description: Adds additional normality tests (Kolmogorov-Smirnov and
@@ -10,4 +10,4 @@ Description: Adds additional normality tests (Kolmogorov-Smirnov and
 License: AGPL3+
 Encoding: UTF-8
 LazyData: true
-Imports: nortest, jmvcore (>= 1.0.7), R6
+Imports: nortest, lmtest, jmvcore (>= 1.0.7), R6
