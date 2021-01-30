@@ -1,19 +1,17 @@
 ---
 title: moretests - Adds more tests to the jamovi analyses
 name: moretests
-version: 0.9.1
+version: 0.9.2
 jms: '1.0'
 authors:
   - Jonathon Love
   - Victor Moreno
 description: >-
-  Adds additional normality tests (Kolmogorov-Smirnov and
-  Anderson-Darling) and homogeneity of variances (Bartlett's) to the jamovi 
-  t-tests, One-way ANOVA, ANOVA, and ANCOVA
-  
+  Adds additional normality tests (Kolmogorov-Smirnov and Anderson-Darling) and
+  homogeneity of variances (Bartlett's) to the jamovi  t-tests, One-way ANOVA,
+  ANOVA, ANCOVA and linear Regression
 usesNative: true
 minApp: 1.0.8
-
 analyses:
   - title: ttestIS
     name: ttestIS
@@ -51,4 +49,11 @@ analyses:
     menuGroup: moretests
     menuTitle: anovaOneW
     addonFor: 'jmv::anovaOneW'
+  - title: linReg
+    name: linReg
+    ns: moretests
+    menuGroup: moretests
+    menuTitle: linReg
+    addonFor: 'jmv::linReg'
+
 ...

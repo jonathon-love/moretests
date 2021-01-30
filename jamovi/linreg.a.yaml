@@ -1,0 +1,11 @@
+---
+name:  linReg
+title: linReg
+menuGroup: moretests
+version: '1.0.0'
+jas: '1.2'
+addonFor: 'jmv::linReg'
+export: false
+
+options: []
+...
