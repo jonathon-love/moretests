@@ -1,7 +1,7 @@
 ---
 title: moretests - Adds more tests to the jamovi analyses
 name: moretests
-version: 0.9.3
+version: 0.9.4
 jms: '1.0'
 authors:
   - Jonathon Love

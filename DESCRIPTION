@@ -1,7 +1,7 @@
 Package: moretests
 Type: Package
 Title: Adds more tests to the jamovi analyses
-Version: 0.9.3
+Version: 0.9.4
 Author: Jonathon Love
 Maintainer: Jonathon Love <jon@thon.cc>
 Description: Adds additional normality tests (Kolmogorov-Smirnov and
