@@ -156,22 +156,13 @@ ancovaClass <- R6::R6Class(
                 data <- self$data
 
                 dep <- self$parent$options$dep
-                depB64 <- jmvcore::toB64(dep)
                 factors <- self$parent$options$factors
-                data[[depB64]] <- data[[dep]]
-                data <- jmvcore::naOmit(data[,c(depB64, factors)])
+                data <- jmvcore::naOmit(data[,c(dep, factors)])
 
                 # Levene's
-                modelTerms <- private$.modelTerms()
-                formula <- jmvcore::constructFormula(depB64, modelTerms)
+                data[[".RES"]] <- abs(self$parent$residuals)
+                formula <- jmvcore::constructFormula('.RES', list(factors))
                 formula <- stats::as.formula(formula)
-                model <- stats::aov(formula, data)
-                residuals <- model$residuals
-
-                data[[".RES"]] <- abs(residuals)
-
-                rhs <- paste0('`', factors, '`', collapse=':')
-                formula <- as.formula(paste0('.RES ~', rhs))
 
                 model <- stats::lm(formula, data)
                 summary <- stats::anova(model)
@@ -193,7 +184,8 @@ ancovaClass <- R6::R6Class(
                 }
 
                 # Bartlett's
-                formula <- as.formula(paste0(depB64, '~', rhs))
+                formula <- jmvcore::constructFormula(dep, list(factors))
+                formula <- stats::as.formula(formula)
                 res <- try(private$.bartlett(formula, data))
 
                 if (! jmvcore::isError(res) && ! is.na(res$statistic)) {
