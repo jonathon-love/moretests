@@ -12,7 +12,7 @@ ancovaClass <- R6::R6Class(
         .init = function() {
 
             if (self$parent$options$norm){
- 
+
                 table <- self$parent$results$assump$norm
 
                 table$setTitle('Normality tests')
@@ -156,12 +156,14 @@ ancovaClass <- R6::R6Class(
                 data <- self$data
 
                 dep <- self$parent$options$dep
+                depB64 <- jmvcore::toB64(dep)
                 factors <- self$parent$options$factors
-                data <- jmvcore::naOmit(data[,c(dep, factors)])
+                data[[depB64]] <- data[[dep]]
+                data <- jmvcore::naOmit(data[,c(depB64, factors)])
 
                 # Levene's
                 modelTerms <- private$.modelTerms()
-                formula <- jmvcore::constructFormula(dep, modelTerms)
+                formula <- jmvcore::constructFormula(depB64, modelTerms)
                 formula <- stats::as.formula(formula)
                 model <- stats::aov(formula, data)
                 residuals <- model$residuals
@@ -182,16 +184,16 @@ ancovaClass <- R6::R6Class(
                     values[['df[lv]']] <- ""
                     values[['df2[lv]']] <- ""
                     values[['p[lv]']] <- ""
-                } 
+                }
                 else {
                     values[['f[lv]']] <- summary[1,"F value"]
                     values[['df[lv]']] <- summary[1,"Df"]
                     values[['df2[lv]']] <- summary[2,"Df"]
                     values[['p[lv]']] <- summary[1,"Pr(>F)"]
                 }
-                
+
                 # Bartlett's
-                formula <- as.formula(paste0(dep, '~', rhs))
+                formula <- as.formula(paste0(depB64, '~', rhs))
                 res <- try(private$.bartlett(formula, data))
 
                 if (! jmvcore::isError(res) && ! is.na(res$statistic)) {
@@ -208,7 +210,7 @@ ancovaClass <- R6::R6Class(
                 }
 
                 thomo$setRow(rowNo=1, values)
-                
+
                 if (is.na(summary[1,"F value"]))
                     thomo$addFootnote(rowKey=1, "f[lv]", "F-statistic could not be calculated")
                 if (jmvcore::isError(res) || is.na(res$statistic))
