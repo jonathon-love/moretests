@@ -211,7 +211,8 @@ anovaOneWClass <- if (requireNamespace('jmvcore')) R6::R6Class(
                         table$setRow(rowKey=depName, values)
 
                         if ( ! is.null(footnote))
-                            table$addFootnote(rowKey=dep, 's', footnote)
+                            # table$addFootnote(rowKey=dep, 's', footnote)
+                            table$addFootnote(rowKey=depName, "s[sw]", footnote)
                     }
                 }
             }
